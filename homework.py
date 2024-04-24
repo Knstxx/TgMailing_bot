@@ -10,7 +10,7 @@ load_dotenv()
 PRACTICUM_TOKEN = os.getenv('practicum_token')
 TELEGRAM_TOKEN = os.getenv('telegram_token')
 TELEGRAM_CHAT_ID = os.getenv('telegram_chat_id')
-RETRY_PERIOD = 600
+RETRY_PERIOD = 10 * 60
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 LAST_MESS = ''
@@ -28,15 +28,12 @@ logging.basicConfig(
 
 def check_tokens():
     """Проверка доступности переменных окружения."""
-    message = ''
     tokens = [PRACTICUM_TOKEN,
               TELEGRAM_TOKEN,
               TELEGRAM_CHAT_ID
               ]
-    for token in tokens:
-        if token is None:
-            message = message + f'Отсутсвует переменная окружения "{token}"'
-    if message != '':
+    if not all(token is not None for token in tokens):
+        message = 'Отсутсвует одна или несколько переменных окружения'
         logging.critical(message)
         raise
 
@@ -57,7 +54,6 @@ def send_message(bot, message):
 
 def get_api_answer(timestamp):
     """Совершение запроса к единственному эндпоинту API-сервиса."""
-    global bot
     payload = {'from_date': timestamp}
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=payload)
@@ -77,7 +73,6 @@ def get_api_answer(timestamp):
 
 def check_response(response):
     """Проверка ответа API на соответствие."""
-    global bot
     if response == 'Эндпоинт недоступен':
         return None
     elif not isinstance(response, dict):
@@ -98,7 +93,6 @@ def check_response(response):
 
 def parse_status(homework):
     """Извлечение статуса из конкретной домашней работы."""
-    global bot
     try:
         homework_name = homework['homework_name']
     except KeyError:
@@ -132,9 +126,9 @@ def main():
             message = f'Сбой в работе программы: {error}'
             logging.error(message)
             send_message(bot, message)
-
-        timestamp += RETRY_PERIOD
-        time.sleep(RETRY_PERIOD)
+        finally:
+            timestamp += RETRY_PERIOD
+            time.sleep(RETRY_PERIOD)
 
 
 if __name__ == '__main__':
