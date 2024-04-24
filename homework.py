@@ -54,6 +54,7 @@ def send_message(bot, message):
 
 def get_api_answer(timestamp):
     """Совершение запроса к единственному эндпоинту API-сервиса."""
+    global bot
     payload = {'from_date': timestamp}
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=payload)
@@ -73,6 +74,7 @@ def get_api_answer(timestamp):
 
 def check_response(response):
     """Проверка ответа API на соответствие."""
+    global bot
     if response == 'Эндпоинт недоступен':
         return None
     elif not isinstance(response, dict):
@@ -93,6 +95,7 @@ def check_response(response):
 
 def parse_status(homework):
     """Извлечение статуса из конкретной домашней работы."""
+    global bot
     try:
         homework_name = homework['homework_name']
     except KeyError:
