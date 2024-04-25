@@ -53,14 +53,16 @@ def get_api_answer(timestamp):
     logging.debug(f'Попытка совершения запроса к {ENDPOINT}')
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=payload)
-        if response.status_code == HTTPStatus.OK:
-            return response.json()
-        else:
-            message = f'Получен статус:{response.status_code}'
-            raise Exception(message)
     except Exception:
         message = f'Эндпоинт {ENDPOINT} недоступен'
         raise Exception(message)
+    # Exception-ы необходимы для прохождения тестов Я.п
+    if response.status_code == HTTPStatus.OK:
+        return response.json()
+    else:
+        # else необходим для прохождения тестов Я.п
+        message = f'Получен статус:{response.status_code}'
+        raise requests.RequestException(message)
 
 
 def check_response(response):
@@ -73,8 +75,7 @@ def check_response(response):
         raise TypeError('Получен неверный формат данных в ответе API')
     if 'current_date' not in response:
         raise KeyError('В полученном ответе отсутсвует "current_date"')
-    homework = response['homeworks']
-    return homework
+    return response['homeworks']
 
 
 def parse_status(homework):
@@ -88,6 +89,7 @@ def parse_status(homework):
     try:
         verdict = HOMEWORK_VERDICTS[homework_status]
         return f'Изменился статус проверки работы "{homework_name}". {verdict}'
+        # опять же, не проходят тесты от Я.п если явно не провести в try
     except KeyError:
         raise KeyError('Неожиданный статус домашней',
                        'работы обнаружен в ответе API')
@@ -107,7 +109,7 @@ def main():
             timedelta = timestamp - RETRY_PERIOD
             response = get_api_answer(timedelta)
             homeworks = check_response(response)
-            if (homeworks is not None) and (homeworks != []):
+            if homeworks:
                 message = parse_status(homeworks[0])
                 if message != last_mess:
                     send_message(bot, message)
