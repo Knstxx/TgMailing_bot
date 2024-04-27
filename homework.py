@@ -8,6 +8,8 @@ import requests
 import telegram
 from dotenv import load_dotenv
 
+from exceptions import RequestException
+
 load_dotenv()
 
 PRACTICUM_TOKEN = os.getenv('practicum_token')
@@ -53,16 +55,13 @@ def get_api_answer(timestamp):
     logging.debug(f'Попытка совершения запроса к {ENDPOINT}')
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=payload)
-    except Exception:
+    except e.RequestException:
         message = f'Эндпоинт {ENDPOINT} недоступен'
-        raise Exception(message)
-    # Exception-ы необходимы для прохождения тестов Я.п
+        raise RequestException(message)
     if response.status_code == HTTPStatus.OK:
         return response.json()
-    else:
-        # else необходим для прохождения тестов Я.п
-        message = f'Получен статус:{response.status_code}'
-        raise requests.RequestException(message)
+    message = f'Получен статус:{response.status_code}'
+    raise requests.RequestException(message)
 
 
 def check_response(response):
@@ -86,13 +85,11 @@ def parse_status(homework):
         raise KeyError('В полученном ответе отсутсвует "status"')
     homework_name = homework['homework_name']
     homework_status = homework['status']
-    try:
-        verdict = HOMEWORK_VERDICTS[homework_status]
-        return f'Изменился статус проверки работы "{homework_name}". {verdict}'
-        # опять же, не проходят тесты от Я.п если явно не провести в try
-    except KeyError:
+    if homework_status not in HOMEWORK_VERDICTS:
         raise KeyError('Неожиданный статус домашней',
                        'работы обнаружен в ответе API')
+    verdict = HOMEWORK_VERDICTS[homework_status]
+    return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
 def main():
