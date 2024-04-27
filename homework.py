@@ -55,7 +55,7 @@ def get_api_answer(timestamp):
     logging.debug(f'Попытка совершения запроса к {ENDPOINT}')
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=payload)
-    except e.RequestException:
+    except requests.RequestException:
         message = f'Эндпоинт {ENDPOINT} недоступен'
         raise RequestException(message)
     if response.status_code == HTTPStatus.OK:
