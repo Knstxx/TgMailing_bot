@@ -25,9 +25,9 @@ HOMEWORK_VERDICTS = {
 }
 
 logging.basicConfig(
-    filename='homework.log',
+    filename='bot_RUDOLF.log',
     format='%(asctime)s %(levelname)s %(message)s',
-    level=logging.DEBUG)
+    level=logging.INFO)
 
 
 def check_tokens():
